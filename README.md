@@ -67,14 +67,21 @@ To build just the GraalJDK11 image:
 
 ## Dockerfile
 
-The Dockerfile contains a number of named stages using the `AS` command which allows imasges to be built from layers created within previous build stages. There are three main stages defined within the file:
+The Dockerfile contains a number of named stages using the `AS` command which allows images to be built from layers created within previous build stages. There are three main stages defined within the file:
 
-### JVM Base
-The base layer for this project is `alpine:latest` which is used to define a stage called `jvm`. This stage is used as a layer within the subsequent stages.
+### `jvm`
+This stage is based from the `alpine:latest` image. The stage is called `jvm` which is used as the base layer within the subsequent stages.
 
-### OpenJDK and OpenJDK-JRE
-The `jvm` base stage is extented by either the `openjdk` or `openjdk-jvm` stages. These stages use the `build-arg java_version=X` to install the specified version of the JDK or the JVM.
+### `openjdk`
+The `openjdk` stage extends the `jvm` base stage and installs a full JDK. This image can be used as the builder for projects which need to compile Java. This stage can produce final images when used with the following parameters in `docker build`:
+
+    --target openjdk --build-arg jvm_version=X
+
+### `openjdk-jre`
+The `openjdk-jre` stage extends the `jvm` base stage and installs the minimal JRE. This image can be used as the runtime environment for projects which need to execute Java. This stage can produce final images when used with the following parameters in `docker build`:
+
+    --target openjdk-jre --build-arg jvm_version=X
 
 ### GraalJDK11
-Additionally the `jvm` base stage can be extended by the `graaljdk11` stage which installs a GraalVM compliant JDK and allows the `native-image` tool to be executed producing a static binary from the Java sources.
+Finally, the `graaljdk11` stage extends the `jvm` base stage and installs a GraalVM compliant JDK. This image can be used as the builder for projects which need to compile Java in to a single binary as it allows the `native-image` tool to be executed producing a static binary from the Java sources.
 

@@ -1,19 +1,19 @@
-FROM alpine:latest as jvm
+FROM alpine:latest AS jvm
 ARG jvm_version
 ENV ENV_JVM_VERSION=$jvm_version
 ENV JAVA_HOME="/usr/lib/jvm/java-1.${ENV_JVM_VERSION}-openjdk"
 ENV PATH="$JAVA_HOME/bin:${PATH}"
 RUN touch stage_000.jvm && touch stage_000.jvm${ENV_JVM_VERSION}
 
-FROM jvm as openjdk
+FROM jvm AS openjdk
 RUN touch stage_010.openjdk && touch stage_010.openjdk${ENV_JVM_VERSION}
 RUN apk add openjdk${ENV_JVM_VERSION}
 
-FROM jvm as openjdk-jre
+FROM jvm AS openjdk-jre
 RUN touch stage_010.openjdk-jre && touch stage_010.openjdk-jre${ENV_JVM_VERSION}
 RUN apk add openjdk${ENV_JVM_VERSION}-jre
 
-FROM jvm as graal-initial
+FROM jvm AS graal-initial
 ENV GRAAL_VERSION=20.0.0
 ENV GRAAL_CE_URL=https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-20.0.0/graalvm-ce-java11-linux-amd64-20.0.0.tar.gz
 RUN touch stage_005.graal-initial
@@ -73,7 +73,7 @@ RUN rm -rf /usr/lib/jvm/graalvm/*src.zip \
 
 RUN du -m /usr/lib/jvm/graalvm | sort -n
 
-FROM graal-initial as graaljdk11
+FROM graal-initial AS graaljdk11
 RUN touch stage_010.graaljdk11
 ENV JAVA_HOME=/usr/lib/jvm/graalvm
 ENV GRAALVM_HOME=/usr/lib/jvm/graalvm

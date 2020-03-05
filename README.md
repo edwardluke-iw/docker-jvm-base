@@ -5,15 +5,17 @@ A docker multi-stage build to create base images for the JVM that can be used fo
 This project is capable of generating a number of Docker images that contain different versions and flavours of the JVM. These can be executed with the Makefile or by runinng the docker commands manually.
 
 ### Docker Commands
-The Makefile targets above are simply running the equivalent docker `build` command. For example the difference between the JDK8 and JDK11 builds are shown below:
+The Makefile targets are simply wrappers for running the appropriate docker `build` command. For example the difference between the JDK8 and JDK11 builds are shown below:
 
-The only change is the `jvm_version` build arg and the final image name.
+The only difference between the two commands below is the `--build-arg jvm_version=` and the final image name.
+
+Note the `--target` parameter which specifies which `stage` within the Dockerfile should be used to produce the final image. In the case below the `jvm_version` is used within the `openjdk` target to install the `openjdk8` or `openjdk11`
 
 	docker build --file Dockerfile --build-arg jvm_version=8 --target openjdk --tag edwardlukeiw/jvm:openjdk8 .
 
 	docker build --file Dockerfile --build-arg jvm_version=11 --target openjdk --tag edwardlukeiw/jvm:openjdk11 .
 
-Similarly, the difference between building a `openjdk` vs an `openjdk-jre` image is based on changing the `target` parameter which modifies which stage in the Dockerfile produces the final image.
+Therefore, the difference between building an `openjdk` vs an `openjdk-jre` image is based on changing the `target` parameter which specifies which stage in the Dockerfile produces the final image.
 
 	docker build --file Dockerfile --build-arg jvm_version=8 --target openjdk --tag edwardlukeiw/jvm:openjdk8 .
 

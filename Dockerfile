@@ -2,7 +2,7 @@ FROM alpine:latest AS jvm
 # Set up shared environment variables
 ARG jvm_version
 ENV ENV_JVM_VERSION=$jvm_version
-ENV JAVA_HOME="/usr/lib/jvm/java-1.${ENV_JVM_VERSION}-openjdk"
+ENV JAVA_HOME="/usr/lib/jvm/java-${ENV_JVM_VERSION}-openjdk"
 ENV PATH="$JAVA_HOME/bin:${PATH}"
 # Add a marker file for debugging purposes
 RUN touch stage_000.jvm && touch stage_000.jvm${ENV_JVM_VERSION}

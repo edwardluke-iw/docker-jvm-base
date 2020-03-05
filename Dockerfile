@@ -1,22 +1,35 @@
 FROM alpine:latest AS jvm
+# Set up shared environment variables
 ARG jvm_version
 ENV ENV_JVM_VERSION=$jvm_version
 ENV JAVA_HOME="/usr/lib/jvm/java-1.${ENV_JVM_VERSION}-openjdk"
 ENV PATH="$JAVA_HOME/bin:${PATH}"
+# Add a marker file for debugging purposes
 RUN touch stage_000.jvm && touch stage_000.jvm${ENV_JVM_VERSION}
 
 FROM jvm AS openjdk
+# Add a marker file for debugging purposes
 RUN touch stage_010.openjdk && touch stage_010.openjdk${ENV_JVM_VERSION}
+# Install java using the Alpine package manager
 RUN apk add openjdk${ENV_JVM_VERSION}
+# Fixes JAVA_HOME as JDK8 lives in jvm/java-1.8-openjdk and JDK11 lives in jvm/java-11-openjdk
+RUN ln -s /usr/lib/jvm/java-1.${ENV_JVM_VERSION}-openjdk/ /usr/lib/jvm/java-${ENV_JVM_VERSION}-openjdk
 
 FROM jvm AS openjdk-jre
+# Add a marker file for debugging purposes
 RUN touch stage_010.openjdk-jre && touch stage_010.openjdk-jre${ENV_JVM_VERSION}
+# Install java using the Alpine package manager
 RUN apk add openjdk${ENV_JVM_VERSION}-jre
+# Fixes JAVA_HOME as JDK8 lives in jvm/java-1.8-openjdk and JDK11 lives in jvm/java-11-openjdk
+RUN ln -s /usr/lib/jvm/java-1.${ENV_JVM_VERSION}-openjdk/ /usr/lib/jvm/java-${ENV_JVM_VERSION}-openjdk
 
 FROM jvm AS graal-initial
+# Set up shared environment variables
 ENV GRAAL_VERSION=20.0.0
 ENV GRAAL_CE_URL=https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-20.0.0/graalvm-ce-java11-linux-amd64-20.0.0.tar.gz
+# Add a marker file for debugging purposes
 RUN touch stage_005.graal-initial
+# Install java using the Alpine package manager
 RUN apk add --no-cache wget tar gzip
 RUN wget -q $GRAAL_CE_URL -O graalvm-ce-linux-amd64.tar.gz
 RUN tar -xvzf graalvm-ce-linux-amd64.tar.gz
@@ -74,11 +87,14 @@ RUN rm -rf /usr/lib/jvm/graalvm/*src.zip \
 RUN du -m /usr/lib/jvm/graalvm | sort -n
 
 FROM graal-initial AS graaljdk11
-RUN touch stage_010.graaljdk11
+# Set up shared environment variables
 ENV JAVA_HOME=/usr/lib/jvm/graalvm
 ENV GRAALVM_HOME=/usr/lib/jvm/graalvm
 ENV PATH=$PATH:/usr/lib/jvm/graalvm/bin
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8'
+# Add a marker file for debugging purposes
+RUN touch stage_010.graaljdk11
+# Add clib dependencies to allow GraalVM to run in Alpine
 RUN apk add --no-cache --virtual .build-deps curl binutils \
   && GLIBC_VER="2.29-r0" \
   && ALPINE_GLIBC_REPO="https://github.com/sgerrand/alpine-pkg-glibc/releases/download" \
@@ -111,10 +127,9 @@ RUN apk add --no-cache --virtual .build-deps curl binutils \
   && apk del --purge .build-deps glibc-i18n \
   && rm -rf /tmp/*.apk /tmp/gcc /tmp/gcc-libs.tar.xz /tmp/libz /tmp/libz.tar.xz /var/cache/apk/*
 
+# Copy GraalVM from previous stage
 COPY --from=graal-initial /usr/lib/jvm/graalvm /usr/lib/jvm/graalvm
-
 RUN apk add --no-cache alpine-baselayout ca-certificates bash curl procps
-RUN /usr/lib/jvm/graalvm/bin/gu available && /usr/lib/jvm/graalvm/bin/gu install native-image
-CMD java -version
 
-FROM openjdk
+# Install the GraalVM Native Imgage toolm using GU
+RUN /usr/lib/jvm/graalvm/bin/gu available && /usr/lib/jvm/graalvm/bin/gu install native-image
